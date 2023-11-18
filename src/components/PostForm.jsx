@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { MyInput } from './UI/input/MyInput';
-import { MyButton } from './UI/button/MyButton';
+import MyInput from './UI/input/MyInput';
+import MyButton from './UI/button/MyButton';
 
-export const PostForm = ({ create }) => {
+const PostForm = ({ create }) => {
   const [post, setPost] = useState({ title: '', body: '' });
 
   const addNewPost = (e) => {
@@ -18,22 +18,11 @@ export const PostForm = ({ create }) => {
 
   return (
     <form>
-      {/* Управляемый компонент */}
-      <MyInput
-        value={post.title}
-        onChange={(e) => setPost({ ...post, title: e.target.value })}
-        type='text'
-        placeholder='Название поста'
-      />
-      {/* Неупровляемый компонент */}
-      {/* <MyInput ref={bodyInputRef} type='text' placeholder='Описание поста' /> */}
-      <MyInput
-        value={post.body}
-        onChange={(e) => setPost({ ...post, body: e.target.value })}
-        type='text'
-        placeholder='Описание поста'
-      />
-      <MyButton onClick={addNewPost}>Создать пост</MyButton>
+      <MyInput value={post.title} onChange={e => setPost({ ...post, title: e.target.value })} type='text' placeholder='Post Name' />
+      <MyInput value={post.body} onChange={e => setPost({ ...post, body: e.target.value })} type='text' placeholder='Post descr' />
+      <MyButton onClick={addNewPost}>Create Post</MyButton>
     </form>
   );
 };
+
+export default PostForm;
