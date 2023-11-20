@@ -1,47 +1,69 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import './styles/App.css';
 import PostList from './components/PostList';
 import PostForm from './components/PostForm';
 import PostFilter from './components/PostFilter';
+import MyModal from './components/UI/MyModa/MyModal';
+import MyButton from './components/UI/button/MyButton';
+import { usePosts } from './hooks/usePosts';
+import axios from 'axios';
+import PostService from './API/PostService';
+import Loader from './components/UI/Loader/Loader';
+import { useFetching } from './hooks/useFetching';
+import { getPageCount, getPagesArray } from './utils/pages';
 
 function App() {
 
-  const [posts, setPosts] = useState([
-    {id: 1, title: 'JS', body: 'Descriotion'},
-    {id: 2, title: 'React', body: 'luk'},
-    {id: 3, title: 'Node', body: 'elelel'},
-  ])
+  const [posts, setPosts] = useState([])
   const [filter, setFilter] = useState({sort: '', query: ''})
+  const [modal, setModal] = useState(false)
+  const [totalCount, setTotalPages] = useState(0)
+  const [limit, setLimit] = useState(10)
+  const [page, setPage] = useState(1)
+  let pagesArray = getPagesArray(totalCount)
 
+  const [fetchPosts, isPostLoading, error] = useFetching(async () => {
+    const response = await PostService.getAll(limit, page)
+    setPosts(response.data)
+    const totalCount = response.headers['x-total-count']
+    setTotalPages(getPageCount(totalCount, limit))
+    console.log(totalCount)
+  });
 
-  const sortedPosts = useMemo(() => {
-    console.log('Отработала функция useMemo')
-    if(filter.sort) {
-      return [...posts].sort((a, b) => a[filter.sort].localeCompare(b[filter.sort]));
-    }
-    return posts
-  }, [posts, filter.sort]);
+  useEffect(() => {
+    console.log('Mount work!')
+    fetchPosts()
+  }, [page])
 
-  const sortedAndSerchadPosts = useMemo(() => {
-    return sortedPosts.filter(post => post.title.toLowerCase().includes(filter.query.toLowerCase()))
-  }, [filter.query, sortedPosts])
-
+  const changePage = (page) => {
+    setPage(page)
+  }
 
   const create = (post) => {
     setPosts([...posts, post])
+    setModal(false)
   }
 
   const removePost = (post) => [
     setPosts(posts.filter(postI => postI.id !== post.id))
   ]
 
+  const sortedAndSerchadPosts = usePosts(posts, filter.sort, filter.query);
+
   return (
     <div className='App'>
-      <PostForm  create={create} />
+      <MyButton onClick={() => fetchPosts()}>Get Posts</MyButton>
+      <MyButton onClick={() => setModal(true)}>Создать пост</MyButton>
+      <MyModal visible={modal} setVisible={setModal}><PostForm  create={create} /></MyModal>
       <hr/>
       <PostFilter filter={filter} setFilter={setFilter}/>
-      <PostList remove={removePost} posts={sortedAndSerchadPosts} title={'First list'}/>
-
+      {error && <h1>Error happend ${error}</h1>}
+      {isPostLoading 
+      ?  <div style={{display: 'flex', justifyContent: 'center', marginTop: '50px'}}><Loader/></div>
+      : <PostList remove={removePost} posts={sortedAndSerchadPosts} title={'First list'}/>}
+      <div className='page__wrapper'>{pagesArray.map(p =>
+        <span onClick={() => changePage(p)} key={p} className={page === p ? 'page page__current' : 'page'}>{p}</span>)}</div>
+      
     </div>
   )
 }
